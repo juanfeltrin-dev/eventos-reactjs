@@ -1,0 +1,5 @@
+// Override default variables before the import
+$body-bg: #000;
+// Import Bootstrap and its default variables
+$transition-collapse: height .35s ease;
+@import '~bootstrap/scss/bootstrap.scss';
