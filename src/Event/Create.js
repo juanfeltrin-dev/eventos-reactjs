@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { FormGroup, Form, FormLabel, FormControl, Row, Col, FormCheck, FormFile, Button } from 'react-bootstrap';
+import CancelAndSend from './../Componenets/CancelAndSend'
 import { useForm } from "react-hook-form";
 import { Editor } from '@tinymce/tinymce-react';
-import Api from './Service/Api'
-import './css/InputRadioImage.css'
+import handleError from './../helpers/handleError';
+import api from "./../helpers/api"
+import './css/InputRadioImage.css';
 
 function Create() {
     const [featuredBanner, setFeaturedBanner] = useState(false);
@@ -11,70 +13,49 @@ function Create() {
     const [ages, setAges] = useState(false);
     const [states, setStates] = useState(false);
     const [cities, setCities] = useState(false);
-    const { register, handleSubmit, watch, errors, setError, clearErrors } = useForm();
+    const { register, handleSubmit, errors, setError, clearErrors } = useForm();
     const [editorChange, setEditorChange] = useState('');
-    const api = new Api();
-
-    // const onSubmit = formData => {
-    //     fetch('http://127.0.0.1:8000/api/event', {
-    //         method: 'POST',
-    //         headers: {
-    //             'Accept': 'application/json',
-    //             'Content-Type': 'application/json'
-    //         },
-    //         body: JSON.stringify(formData)
-    //     })
-    //     .then(function(res) {
-    //         console.log(res.json())
-    //     })
-    //     .catch(e => console.log)
-    // };
 
     async function onSubmit(formData) {
-        const response = await fetch('http://127.0.0.1:8000/api/event', {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-        });
-
-        const data = await response.json();
-
-        for(var error in data.errors) {
-            const errorArray = data.errors[error];
-
-            errorArray.map(e => {
-                setError(error, {
-                    type: "manual",
-                    message: e
-                })
-                console.log(error, e)
-            })
+        try {
+            await api.post("/event", JSON.stringify(formData));
+        } catch (error) {
+            handleError(setError, error);
         }
     }
 
     useEffect(() => {
         async function getAges() {
-            const res = await fetch('http://127.0.0.1:8000/api/age');
-            const data = await res.json();
-    
-            setAges(data);
+            try {
+                const response  = await api.get("/age");
+                const data      = response.data;
+                
+                setAges(data);
+            } catch (error) {
+                alert(error);
+            }
         }
 
         async function getCategories() {
-            const res = await fetch('http://127.0.0.1:8000/api/category');
-            const data = await res.json();
-
-            setCategories(data);
+            try {
+                const response  = await api.get("/category");
+                const data      = response.data;                
+                
+                setCategories(data);
+            } catch (error) {
+                alert(error);                
+            }
         }
 
         async function getStates() {
-            const res = await fetch('http://127.0.0.1:8000/api/state');
-            const data = await res.json();
-    
-            setStates(data);
+            try {
+                const response  = await api.get("/state");
+                const data      = response.data;
+                
+                setStates(data);
+            } catch (error) {
+                alert(error);    
+            }
         }
 
         getCategories();
@@ -83,10 +64,14 @@ function Create() {
     }, [])
 
     async function getCities(state) {
-        const res = await fetch('http://127.0.0.1:8000/api/city/state/' + state);
-        const data = await res.json();
-
-        setCities(data);
+        try {
+            const response  = await api.get("/city/state/" + state);
+            const data      = response.data;
+    
+            setCities(data);
+        } catch (error) {
+            alert(error);   
+        }
     }
 
     return(
@@ -95,15 +80,15 @@ function Create() {
                 <Col sm={12} md={4}>
                     <FormGroup controlId="name">
                         <FormLabel>Título</FormLabel>
-                        <FormControl name="name" type="text" ref={register} placeholder="Título"/>
-                        {errors.name && <p>{errors.name.message}</p>}
+                        <FormControl name="name" className={errors.name && "is-invalid"} type="text" ref={register} placeholder="Título"/>
+                        {errors.name && <p className="invalid-feedback">{errors.name.message}</p>}
                     </FormGroup>
                 </Col>
 
                 <Col sm={12} md={4}>
                     <FormGroup controlId="category_id">
                         <FormLabel>Categoria</FormLabel>
-                        <FormControl name="category_id" ref={register} as="select">
+                        <FormControl name="category_id" className={errors.category_id && "is-invalid"} ref={register} as="select">
                             <option value="">{states ? 'Selecione a categoria' : '...'}</option>
                             {
                                 categories && (
@@ -113,15 +98,15 @@ function Create() {
                                 )
                             }
                         </FormControl>
-                        {errors.category_id && <p>{errors.category_id.message}</p>}
+                        {errors.category_id && <p className="invalid-feedback">{errors.category_id.message}</p>}
                     </FormGroup>
                 </Col>
                 
                 <Col sm={12} md={4}>
                     <FormGroup controlId="date">
                         <FormLabel>Data</FormLabel>
-                        <FormControl name="date" ref={register} type="datetime-local" placeholder="Data"/>
-                        {errors.date && <p>{errors.date.message}</p>}
+                        <FormControl name="date" className={errors.date && "is-invalid"} ref={register} type="datetime-local" placeholder="Data"/>
+                        {errors.date && <p className="invalid-feedback">{errors.date.message}</p>}
                     </FormGroup>
                 </Col>
             </Row>
@@ -130,8 +115,8 @@ function Create() {
                 <Col sm={12} md={4}>
                     <FormGroup controlId="quantity_tickets">
                         <FormLabel>Quantidade de Ingressos</FormLabel>
-                        <FormControl name="quantity_tickets" ref={register} type="number" min={0} placeholder="Quantidade de Ingressos"/>
-                        {errors.quantity_tickets && <p>{errors.quantity_tickets.message}</p>}
+                        <FormControl name="quantity_tickets" className={errors.quantity_tickets && "is-invalid"} ref={register} type="number" min={0} placeholder="Quantidade de Ingressos"/>
+                        {errors.quantity_tickets && <p className="invalid-feedback">{errors.quantity_tickets.message}</p>}
                     </FormGroup>
                 </Col>
                 
@@ -139,15 +124,15 @@ function Create() {
                     <FormGroup controlId="banner">
                         <FormLabel>Banner</FormLabel>
                         {/* <FormFile name="banner" ref={register} /> */}
-                        {errors.banner && <p>{errors.banner.message}</p>}
+                        {/* {errors.banner && <p>{errors.banner.message}</p>} */}
                     </FormGroup>
                 </Col>
                 
                 <Col sm={12} md={4}>
                     <FormGroup controlId="featured_banner">
                         <FormLabel>Banner Destaque</FormLabel>
-                        <FormCheck name="featured_banner" ref={register} type="checkbox" onChange={(event) => setFeaturedBanner(event.target.checked)} label={ featuredBanner ? 'Sim' : 'Não'} />           
-                        {errors.featured_banner && <p>{errors.featured_banner.message}</p>}             
+                        <FormCheck name="featured_banner" className={errors.featured_banner && "is-invalid"} ref={register} type="checkbox" onChange={(event) => setFeaturedBanner(event.target.checked)} label={ featuredBanner ? 'Sim' : 'Não'} />           
+                        {errors.featured_banner && <p className="invalid-feedback">{errors.featured_banner.message}</p>}           
                     </FormGroup>
                 </Col>
             </Row>
@@ -156,7 +141,7 @@ function Create() {
                 <Col sm={12} md={4}>
                     <FormGroup controlId="state">
                         <FormLabel>Estado</FormLabel>
-                        <FormControl name="state" ref={register({required: true})} onChange={(event) => getCities(event.target.value)} as="select">
+                        <FormControl name="state" className={errors.state && "is-invalid"} ref={register({required: true})} onChange={(event) => getCities(event.target.value)} as="select">
                             <option value="">{states ? 'Selecione o estado' : '...'}</option>
                             {
                                 states && (
@@ -166,14 +151,14 @@ function Create() {
                                 )
                             }
                         </FormControl>
-                        {errors.state && "O campo estado é obrigatório."}
+                        {errors.state && <p className="invalid-feedback">O campo estado é obrigatório.</p>} 
                     </FormGroup>
                 </Col>
                 
                 <Col sm={12} md={4}>
                     <FormGroup controlId="city_id">
                         <FormLabel>Cidade</FormLabel>
-                        <FormControl name="city_id" ref={register} as="select">
+                        <FormControl name="city_id" className={errors.city_id && "is-invalid"} ref={register} as="select">
                             <option value="">{cities ? 'Selecione a cidade' : 'Selecione um estado'}</option>
                             {
                                 cities && (
@@ -183,15 +168,15 @@ function Create() {
                                 )
                             }
                         </FormControl>
-                        {errors.city_id && <p>{errors.city_id.message}</p>}
+                        {errors.city_id && <p className="invalid-feedback">{errors.city_id.message}</p>} 
                     </FormGroup>
                 </Col>
                 
                 <Col sm={12} md={4}>
                     <FormGroup controlId="place">
                         <FormLabel>Local</FormLabel>
-                        <FormControl name="place" ref={register} type="text" placeholder="Local"/>
-                        {errors.place && <p>{errors.place.message}</p>}
+                        <FormControl name="place" className={errors.place && "is-invalid"} ref={register} type="text" placeholder="Local"/>
+                        {errors.place && <p className="invalid-feedback">{errors.place.message}</p>} 
                     </FormGroup>
                 </Col>
             </Row>
@@ -200,12 +185,12 @@ function Create() {
                 <Col sm={12} md={4}>
                     <FormGroup controlId="status">
                         <FormLabel>Status</FormLabel>
-                        <FormControl name="status" ref={register} as="select">
+                        <FormControl name="status" className={errors.status && "is-invalid"} ref={register} as="select">
                             <option value="">Selecione o status</option>
                             <option value="1">Ativo</option>
                             <option value="0">Inativo</option>
                         </FormControl>
-                        {errors.status && <p>{errors.status.message}</p>}
+                        {errors.status && <p className="invalid-feedback">{errors.status.message}</p>} 
                     </FormGroup>
                 </Col>
 
@@ -221,7 +206,7 @@ function Create() {
                                 ))
                             ) : "..."
                         }
-                        {errors.age_rating_id && <p>{errors.age_rating_id.message}</p>}
+                        {errors.age_rating_id && <p className="invalid-feedback" style={{display: "block"}}>{errors.age_rating_id.message}</p>} 
                     </FormGroup>
                 </Col>
             </Row>
@@ -249,16 +234,11 @@ function Create() {
                             onEditorChange={setEditorChange}
                             onChange={() => clearErrors(["description"])}
                         />
-                        {errors.description && <p>{errors.description.message}</p>}
+                        {errors.description && <p className="invalid-feedback" style={{display: "block"}}>{errors.description.message}</p>} 
                     </FormGroup>
                 </Col>
             </Row>
-
-            <Row>
-                <Col className="d-flex justify-content-end">
-                    <Button variant="success" type="submit">Cadastrar</Button>
-                </Col>
-            </Row>
+            <CancelAndSend/>
         </Form>
     );
 }
